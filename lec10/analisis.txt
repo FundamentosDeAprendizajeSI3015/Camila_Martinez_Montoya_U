@@ -1,0 +1,98 @@
+=====================================================================
+ANÁLISIS DE CLUSTERING — DATASET UdeA
+Respuestas a las 3 preguntas
+=====================================================================
+ 
+---------------------------------------------------------------------
+PREGUNTA 1: ¿Cuántos de los label=1 son realmente clase 1
+            y cuántos son realmente clase 2?
+---------------------------------------------------------------------
+ 
+Según KMeans K=2 (100 semillas, mejor inercia) alineado con las
+etiquetas reales:
+ 
+  ▸ ~39.5% de los puntos label=1 → confirmados como clase 1
+  ▸ ~60.5% de los puntos label=1 → reclasificados como clase 2
+ 
+Es decir, más de la mitad de lo que los analistas marcaron como
+clase 1 pertenece geométricamente al cluster de clase 2.
+HDBSCAN lo confirma: encuentra 3 clusters naturales (no 2), y la
+composición de cada uno mezcla ambas etiquetas sin una separación
+limpia que respalde el criterio de los analistas.
+ 
+---------------------------------------------------------------------
+PREGUNTA 2: ¿Por qué quedaron mal etiquetados?
+            ¿Son outliers o puntos no-core?
+---------------------------------------------------------------------
+ 
+NO son outliers.
+ 
+El outlier score medio de los puntos mal etiquetados es prácticamente
+igual al promedio global (≈ misma magnitud). Según la clasificación
+interna de HDBSCAN:
+ 
+  ▸ La mayoría son core points (outlier score < 0.05)
+  ▸ Algunos son puntos borde (0.05 – 0.20)
+  ▸ Muy pocos alcanzan score de outlier real (≥ 0.20)
+ 
+¿Por qué quedaron mal etiquetados entonces?
+ 
+Son core points en el cluster equivocado. Están densamente
+incrustados en la región del espacio que corresponde a la clase 2,
+pero los analistas los marcaron como clase 1. Las causas más
+probables son:
+ 
+  1. Criterio univariado: los analistas usaron un umbral sobre
+     una sola variable financiera (e.g. liquidez o gp_ratio)
+     sin ver la estructura multivariada completa.
+ 
+  2. Frontera ambigua: en el espacio original de 14 dimensiones,
+     la frontera entre clases no es lineal. Un corte simple en
+     una o dos variables inevitablemente arrastra puntos del
+     cluster vecino.
+ 
+  3. Sesgo de confirmación: ciertas unidades o años que
+     "históricamente" se consideraban de una clase fueron
+     reetiquetados sin verificar si los datos financieros de ese
+     período respaldaban el cambio.
+ 
+En resumen: no son anomalías ni ruido. Son observaciones normales
+que simplemente viven del lado equivocado de la frontera que los
+analistas trazaron sin usar el espacio multivariado.
+ 
+---------------------------------------------------------------------
+PREGUNTA 3: ¿Ascender o despedir a los analistas financieros?
+---------------------------------------------------------------------
+ 
+VEREDICTO: Ni lo uno ni lo otro todavía — pero hay que tener
+una conversación seria con ellos.
+ 
+Los hechos:
+  ▸ KMeans logró ~51% de accuracy vs las etiquetas → equivale
+    a lanzar una moneda. El etiquetado no refleja ninguna
+    frontera natural en los datos.
+  ▸ HDBSCAN encuentra 3 clusters, no 2. Los analistas forzaron
+    una partición binaria sobre una estructura más compleja.
+  ▸ Las features más discriminativas (e.g. gp_ratio, liquidez,
+    hhi_fuentes) muestran diferencias claras entre clusters,
+    pero el criterio de los analistas no las aprovechó.
+ 
+Argumento para NO despedirlos aún:
+  Los datos financieros universitarios son ruidosos y el contexto
+  institucional importa. Un algoritmo no captura si una unidad
+  estaba en reestructuración, si hubo cambios de rectoría, o si
+  los datos de un año tienen errores de reporte. Los analistas
+  sí tienen ese contexto.
+ 
+Argumento para exigirles un cambio de metodología:
+  Con 60.5% de mal etiquetados en la clase 1, el trabajo actual
+  no es confiable como insumo para decisiones. Necesitan
+  incorporar reducción de dimensionalidad y validación con
+  métricas objetivas (silhouette, ARI) antes de etiquetar.
+ 
+RECOMENDACIÓN FINAL:
+  Ascender al que aprenda a combinar su criterio experto con
+  el clustering. Reeducar al que insista en usar solo Excel
+  con un umbral de liquidez > 1.5.
+ 
+=====================================================================
