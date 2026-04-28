@@ -1,4 +1,6 @@
-# Nombre: Camila_Martinez_Montoya_U
+## Nombre: 
+
+Camila Martinez Montoya
 
 # Máquinas Automatizadas
 
